@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Code, ChevronRight } from 'lucide-react';
+import { BookOpen, Code, ChevronRight, LogOut } from 'lucide-react';
 
 const ChatInitPage = () => {
   const navigate = useNavigate();
@@ -18,6 +18,26 @@ const ChatInitPage = () => {
     'Linked List': ['Singly Linked List', 'Doubly Linked List', 'Circular Linked List'],
     // Add more topics and subtopics as needed
   };
+
+  useEffect(() => {
+    const verifyToken = async () => {
+      const token = localStorage.getItem('token');
+      console.log('Token:', token);
+
+      try {
+        const response = await fetch(`http://127.0.0.1:8000/verify-token/${token}`);
+
+        if(!response.ok){
+          throw new Error('Token verification failed');
+        }
+      } catch (error) {
+        localStorage.removeItem('token');
+        navigate('/auth');
+      }
+    }
+
+    verifyToken();
+  }, [navigate]);
   
   const handleModeSelect = (mode) => {
     setFormData(prev => ({ ...prev, mode }));
@@ -33,16 +53,22 @@ const ChatInitPage = () => {
         body: JSON.stringify(formData),
       });
 
-      console.log(response);
-
       if (response.ok) {
         const data = await response.json(); 
+        console.log(data);
         const chatId = data.id;
         navigate(`/chat/${chatId}`);
+      }else {
+        console.error('Failed to submit learning preferences');
       }
     } catch (error) {
       console.error('Error:', error);
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/auth');
   };
 
 
@@ -50,12 +76,22 @@ const ChatInitPage = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            DSA Learning Assistant
-          </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-300">
-            Customize your learning experience
-          </p>
+        <div className="text-center flex-1">
+            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+              DSA Learning Assistant
+            </h1>
+            <p className="text-lg text-gray-600 dark:text-gray-300">
+              Customize your learning experience
+            </p>
+          </div>
+
+          <button
+            onClick={handleLogout}
+            className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Logout</span>
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8 bg-white dark:bg-gray-800 p-6 rounded-lg shadow">

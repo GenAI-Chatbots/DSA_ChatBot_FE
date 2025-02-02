@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Menu, Plus, MessageSquare, Loader2, ChevronDown, ChevronRight, Copy, Check, Trash2 } from 'lucide-react';
+import { Send, Menu, Plus, MessageSquare, Loader2, ChevronDown, ChevronRight, Copy, Check, Trash2, LogOut } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const generateSessionId = () => { 
     return 'user' + Math.floor(Math.random() * 1000);
@@ -355,49 +356,61 @@ const FormattedText = ({ text }) => {
 
 
 
-const Sidebar = ({ isOpen, onClose, onClearSession, isClearing }) => (
-  <div className={`fixed left-0 top-0 bottom-0 w-64 bg-gray-900 transform ${
-    isOpen ? 'translate-x-0' : '-translate-x-full'
-  } transition-transform duration-200 ease-in-out md:translate-x-0`}>
-    <div className="flex flex-col h-full">
-      <div className="p-4 space-y-2">
-        <button className="w-full flex items-center justify-start space-x-2 px-3 py-2 border border-gray-700 rounded-lg hover:bg-gray-700 text-white transition-colors">
-          <Plus className="w-4 h-4" />
-          <span>New chat</span>
-        </button>
+const Sidebar = ({ isOpen, onClose, onClearSession, isClearing , id}) => {
+  const navigate = useNavigate();
+  
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/auth');
+  };
+
+  return(
+    <div className={`fixed left-0 top-0 bottom-0 w-64 bg-gray-900 transform ${
+      isOpen ? 'translate-x-0' : '-translate-x-full'
+    } transition-transform duration-200 ease-in-out md:translate-x-0`}>
+      <div className="flex flex-col h-full">
+        <div className="p-4 space-y-2">
+          <div style={{color:"white"}}>Chat Id:  {id}</div>
+          <button className="w-full flex items-center justify-start space-x-2 px-3 py-2 border border-gray-700 rounded-lg hover:bg-gray-700 text-white transition-colors">
+            <Plus className="w-4 h-4" />
+            <span>New chat</span>
+          </button>
+          
+          <button 
+            onClick={onClearSession}
+            disabled={isClearing}
+            className="w-full flex items-center justify-start space-x-2 px-3 py-2 border border-red-700 rounded-lg hover:bg-red-700/20 text-red-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isClearing ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Trash2 className="w-4 h-4" />
+            )}
+            <span>Clear session</span>
+          </button>
+        </div>
         
-        <button 
-          onClick={onClearSession}
-          disabled={isClearing}
-          className="w-full flex items-center justify-start space-x-2 px-3 py-2 border border-red-700 rounded-lg hover:bg-red-700/20 text-red-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isClearing ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Trash2 className="w-4 h-4" />
-          )}
-          <span>Clear session</span>
-        </button>
-      </div>
-      
-      <div className="flex-1 overflow-y-auto">
-        <div className="px-4 py-2">
-          <div className="text-gray-400 text-sm">Previous topics</div>
-          <div className="mt-2 space-y-2">
-            <button className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-700 text-gray-100 text-sm">
-              <MessageSquare className="w-4 h-4" />
-              <span>Stack Operations</span>
-            </button>
-            <button className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-700 text-gray-100 text-sm">
-              <MessageSquare className="w-4 h-4" />
-              <span>Stack Implementation</span>
-            </button>
+        <div className="flex-1 overflow-y-auto">
+          <div className="px-4 py-2">
+            <div className="text-gray-400 text-sm">Relevent Images & Docs</div>
+            <div className="mt-2 space-y-2">
+            </div>
           </div>
         </div>
+  
+        <div className="p-4 border-t border-gray-800">
+            <button 
+              onClick={handleLogout}
+              className="w-full flex items-center justify-start space-x-2 px-3 py-2 border border-gray-700 rounded-lg hover:bg-gray-700 text-white transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Logout</span>
+            </button>
+          </div>
       </div>
     </div>
-  </div>
-);
+  )
+};
 
 const DSATutorChat = () => {
   const [messages, setMessages] = useState([]);
@@ -406,7 +419,12 @@ const DSATutorChat = () => {
   const [isClearing, setIsClearing] = useState(false);
   const [sessionId] = useState('user333');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [learningPreference, setLearningPreference] = useState(null);
   const messagesEndRef = useRef(null);
+
+  const navigate = useNavigate();
+
+  const { id } = useParams();
 
   const preferences = JSON.parse(localStorage.getItem('chatPreferences') || '{}');
   
@@ -415,7 +433,29 @@ const DSATutorChat = () => {
     if (!preferences.topic) {
       navigate('/');
     }
+    
+    fetchLearningPreference(id);
   }, []);
+
+   useEffect(() => {
+      const verifyToken = async () => {
+        const token = localStorage.getItem('token');
+        console.log('Token:', token);
+  
+        try {
+          const response = await fetch(`http://127.0.0.1:8000/verify-token/${token}`);
+  
+          if(!response.ok){
+            throw new Error('Token verification failed');
+          }
+        } catch (error) {
+          localStorage.removeItem('token');
+          navigate('/auth');
+        }
+      }
+  
+      verifyToken();
+    }, [navigate]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -504,13 +544,37 @@ const DSATutorChat = () => {
     }
   };
 
+  const fetchLearningPreference = async (id) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/learning-preferences/${id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch learning preference");
+      }
+      const data = await response.json();
+      setLearningPreference(data);
+
+      console.log("Learning Preference:", learningPreference);
+
+    } catch (error) {
+      console.error("Error fetching learning preference:", error);
+    }
+  };
+
   return (
     <div className="flex h-screen bg-white dark:bg-gray-800">
+
       <Sidebar 
         isOpen={isSidebarOpen} 
         onClose={() => setIsSidebarOpen(false)}
         onClearSession={handleClearSession}
         isClearing={isClearing}
+        id={id}
       />
       
       <div className="flex-1 flex flex-col md:ml-64">
