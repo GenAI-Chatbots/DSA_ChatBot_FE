@@ -1,0 +1,572 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { Send, Menu, Plus, MessageSquare, Loader2, ChevronDown, ChevronRight, Copy, Check, Trash2 } from 'lucide-react';
+
+const generateSessionId = () => { 
+    return 'user' + Math.floor(Math.random() * 1000);
+}
+
+const CodeBlock = ({ code, language }) => {
+  const [copied, setCopied] = useState(false);
+  
+  const handleCopy = () => {
+    navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="relative my-4 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+      <div className="flex items-center justify-between px-4 py-2 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <span className="text-sm text-gray-600 dark:text-gray-300">{language}</span>
+        <button
+          onClick={handleCopy}
+          className="flex items-center space-x-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+        >
+          {copied ? (
+            <Check className="w-4 h-4" />
+          ) : (
+            <Copy className="w-4 h-4" />
+          )}
+        </button>
+      </div>
+      <pre className="p-4 bg-gray-50 dark:bg-gray-900 overflow-x-auto">
+        <code className="text-sm font-mono text-gray-800 dark:text-gray-200">{code}</code>
+      </pre>
+    </div>
+  );
+};
+
+const Exercise = ({ exercise }) => {
+  const [isExpanded, setIsExpanded] = useState(true);
+
+  return (
+    <div className="my-4 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+      <button 
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900 text-left"
+      >
+        <div className="flex items-center space-x-2">
+          <div className="bg-blue-500 text-white px-2 py-1 rounded text-sm">Exercise</div>
+          <h3 className="font-medium text-gray-900 dark:text-white">{exercise.title}</h3>
+        </div>
+        {isExpanded ? (
+          <ChevronDown className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+        ) : (
+          <ChevronRight className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+        )}
+      </button>
+
+      {isExpanded && (
+        <div className="p-4 space-y-4">
+          <div className="space-y-2">
+            <div className="font-medium text-gray-900 dark:text-white">Question:</div>
+            <p className="text-gray-700 dark:text-gray-300">{exercise.question}</p>
+          </div>
+
+          {exercise.code && (
+            <CodeBlock code={exercise.code} language={exercise.language || 'java'} />
+          )}
+
+          <div className="mt-4">
+            <div className="flex items-center space-x-2 text-yellow-600 dark:text-yellow-400">
+              <div className="font-medium">Hint:</div>
+              <p>{exercise.hint}</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const ImageGallery = ({ images }) => {
+  const [selectedImage, setSelectedImage] = useState(null);
+
+  if (!images || images.length === 0) return null;
+
+  return (
+    <div className="my-4">
+      {selectedImage && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={() => setSelectedImage(null)}>
+          <div className="max-w-4xl w-full bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-xl">
+            <div className="relative">
+              <img 
+                src={selectedImage} 
+                alt="Stack visualization" 
+                className="w-full h-auto"
+                onClick={(e) => e.stopPropagation()}
+              />
+              <button 
+                className="absolute top-2 right-2 bg-gray-800 bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-75"
+                onClick={() => setSelectedImage(null)}
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        {images.map((url, index) => (
+          <div 
+            key={index} 
+            className="relative aspect-w-16 aspect-h-9 cursor-pointer rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700"
+            onClick={() => setSelectedImage(url)}
+          >
+            <img 
+              src={url} 
+              alt={`Stack visualization ${index + 1}`}
+              className="w-full h-full object-cover hover:opacity-90 transition-opacity"
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// const ChatMessage = ({ message, isUser }) => {
+//   const processContent = (content) => {
+//     if (typeof content !== 'string') return content;
+
+//     if (content.includes('Exercise:')) {
+//       const exerciseData = {
+//         title: content.match(/Exercise: (.*?)(?:\n|$)/)?.[1] || 'Practice Exercise',
+//         question: content.match(/Question:(.*?)(?=Hint:|\n\n|$)/s)?.[1]?.trim() || '',
+//         hint: content.match(/Hint:(.*?)(?=\n\n|$)/s)?.[1]?.trim() || '',
+//         code: content.match(/```.*?\n([\s\S]*?)```/)?.[1] || '',
+//         language: content.match(/```(.*?)\n/)?.[1] || 'java'
+//       };
+
+//       return (
+//         <div className="space-y-4">
+//           <Exercise exercise={exerciseData} />
+//         </div>
+//       );
+//     }
+
+//     if (content.includes('```')) {
+//       const parts = content.split(/(```[\s\S]*?```)/g);
+//       return parts.map((part, index) => {
+//         if (part.startsWith('```') && part.endsWith('```')) {
+//           const language = part.match(/```(.*?)\n/)?.[1] || '';
+//           const code = part.replace(/```.*?\n/, '').replace(/```$/, '');
+//           return <CodeBlock key={index} code={code} language={language} />;
+//         }
+//         return <p key={index} className="text-gray-700 dark:text-gray-300">{part}</p>;
+//       });
+//     }
+
+//     return <p className="text-gray-700 dark:text-gray-300">{content}</p>;
+//   };
+
+//   return (
+//     <div className={`border-b border-gray-100 dark:border-gray-800 ${
+//       isUser ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700'
+//     }`}>
+//       <div className="max-w-3xl mx-auto px-4 py-6">
+//         <div className="flex space-x-4">
+//           <div className={`w-8 h-8 rounded-sm flex items-center justify-center flex-shrink-0 ${
+//             isUser ? 'bg-gray-500' : 'bg-emerald-500'
+//           }`}>
+//             {isUser ? 'U' : 'T'}
+//           </div>
+          
+//           <div className="flex-1 space-y-2">
+//             {processContent(message.content)}
+            
+//             {message.feedback && (
+//               <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+//                 <p className="font-medium mb-2">Feedback:</p>
+//                 <p>{message.feedback}</p>
+//               </div>
+//             )}
+            
+//             {message.sources && message.sources.length > 0 && (
+//               <div className="mt-4 text-sm text-gray-600 dark:text-gray-300">
+//                 <p className="font-medium mb-1">Sources:</p>
+//                 {message.sources.map((source, idx) => (
+//                   <p key={idx} className="ml-2">
+//                     • {source.lecture_title} - {source.section_type}
+//                     {source.subsection && ` (${source.subsection})`}
+//                   </p>
+//                 ))}
+//               </div>
+//             )}
+//           </div>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
+const ChatMessage = ({ message, isUser }) => {
+  const processContent = (content) => {
+    if (typeof content !== 'string') return content;
+
+    if (content.includes('Exercise:')) {
+      const exerciseData = {
+        title: content.match(/Exercise: (.*?)(?:\n|$)/)?.[1] || 'Practice Exercise',
+        question: content.match(/Question:(.*?)(?=Hint:|\n\n|$)/s)?.[1]?.trim() || '',
+        hint: content.match(/Hint:(.*?)(?=\n\n|$)/s)?.[1]?.trim() || '',
+        code: content.match(/```.*?\n([\s\S]*?)```/)?.[1] || '',
+        language: content.match(/```(.*?)\n/)?.[1] || 'java'
+      };
+
+      return (
+        <div className="space-y-4">
+          <Exercise exercise={exerciseData} />
+        </div>
+      );
+    }
+
+    if (content.includes('```')) {
+      const parts = content.split(/(```[\s\S]*?```)/g);
+      return parts.map((part, index) => {
+        if (part.startsWith('```') && part.endsWith('```')) {
+          const language = part.match(/```(.*?)\n/)?.[1] || '';
+          const code = part.replace(/```.*?\n/, '').replace(/```$/, '');
+          return <CodeBlock key={index} code={code} language={language} />;
+        }
+        return <FormattedText key={index} text={part} />;
+      });
+    }
+
+    return <FormattedText text={content} />;
+  };
+
+  return (
+    <div className={`border-b border-gray-100 dark:border-gray-800 ${
+      isUser ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700'
+    }`}>
+      <div className="max-w-3xl mx-auto px-4 py-6">
+        <div className="flex space-x-4">
+          <div className={`w-8 h-8 rounded-sm flex items-center justify-center flex-shrink-0 ${
+            isUser ? 'bg-gray-500' : 'bg-emerald-500'
+          }`}>
+            {isUser ? 'U' : 'T'}
+          </div>
+          
+          <div className="flex-1 space-y-2">
+            {processContent(message.content)}
+            
+            {message.image_urls && message.image_urls.length > 0 && (
+              <ImageGallery images={message.image_urls} />
+            )}
+            
+            {message.feedback && (
+              <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                <p className="font-medium mb-2">Feedback:</p>
+                <p>{message.feedback}</p>
+              </div>
+            )}
+            
+            {message.sources && message.sources.length > 0 && (
+              <div className="mt-4 text-sm text-gray-600 dark:text-gray-300">
+                <p className="font-medium mb-1">Sources:</p>
+                {message.sources.map((source, idx) => (
+                  <p key={idx} className="ml-2">
+                    • {source.lecture_title} - {source.section_type}
+                    {source.subsection && ` (${source.subsection})`}
+                  </p>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// New component to handle text formatting
+const FormattedText = ({ text }) => {
+  const formatText = (text) => {
+    // First, split the text into sentences
+    const sentences = text.split(/(?<=\?|\.|!)\s+/);
+    
+    return sentences.map((sentence, sentenceIndex) => {
+      // Check if the sentence is a question
+      const isQuestion = sentence.trim().endsWith('?');
+      
+      // If it's a numbered point, process it differently
+      if (/^\d+\./.test(sentence)) {
+        const [numberPart, ...restParts] = sentence.split(/(?<=\d\.)\s+/);
+        const number = numberPart.trim().replace('.', '');
+        const content = restParts.join(' ');
+        
+        const processedContent = processTextParts(content);
+        
+        return (
+          <div key={sentenceIndex} className="flex space-x-4 py-2">
+            {/* <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 flex items-center justify-center text-sm font-medium">
+              {number}
+            </div> */}
+            <div className="flex-1 text-gray-700 dark:text-gray-300">
+              {processedContent}
+            </div>
+          </div>
+        );
+      }
+      
+      // For questions, wrap in a special container
+      if (isQuestion) {
+        return (
+          <div key={sentenceIndex} className="my-2 p-3 bg-white-50 dark:bg-gray-900/20 border-l-4 border-white-400 dark:border-white-500 rounded">
+            <div className="flex items-start space-x-2">
+              {/* <span className="text-purple-500 dark:text-purple-400 mt-1">?</span> */}
+              <span className="text-gray-800 dark:text-gray-200">
+                {processTextParts(sentence)}
+              </span>
+            </div>
+          </div>
+        );
+      }
+      
+      // For regular sentences
+      return (
+        <p key={sentenceIndex} className="text-gray-700 dark:text-gray-300">
+          {processTextParts(sentence)}
+        </p>
+      );
+    });
+  };
+  
+  // Helper function to process bold text and other formatting
+  const processTextParts = (text) => {
+    return text.split(/(\*\*.*?\*\*)/g).map((part, i) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        const boldText = part.slice(2, -2);
+        return (
+          <span key={i} className="font-semibold text-gray-900 dark:text-white bg-yellow-100 dark:bg-yellow-900/30 px-1 rounded">
+            {boldText}
+          </span>
+        );
+      }
+      return part;
+    });
+  };
+
+  return <div className="space-y-2">{formatText(text)}</div>;
+};
+
+
+
+const Sidebar = ({ isOpen, onClose, onClearSession, isClearing }) => (
+  <div className={`fixed left-0 top-0 bottom-0 w-64 bg-gray-900 transform ${
+    isOpen ? 'translate-x-0' : '-translate-x-full'
+  } transition-transform duration-200 ease-in-out md:translate-x-0`}>
+    <div className="flex flex-col h-full">
+      <div className="p-4 space-y-2">
+        <button className="w-full flex items-center justify-start space-x-2 px-3 py-2 border border-gray-700 rounded-lg hover:bg-gray-700 text-white transition-colors">
+          <Plus className="w-4 h-4" />
+          <span>New chat</span>
+        </button>
+        
+        <button 
+          onClick={onClearSession}
+          disabled={isClearing}
+          className="w-full flex items-center justify-start space-x-2 px-3 py-2 border border-red-700 rounded-lg hover:bg-red-700/20 text-red-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isClearing ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Trash2 className="w-4 h-4" />
+          )}
+          <span>Clear session</span>
+        </button>
+      </div>
+      
+      <div className="flex-1 overflow-y-auto">
+        <div className="px-4 py-2">
+          <div className="text-gray-400 text-sm">Previous topics</div>
+          <div className="mt-2 space-y-2">
+            <button className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-700 text-gray-100 text-sm">
+              <MessageSquare className="w-4 h-4" />
+              <span>Stack Operations</span>
+            </button>
+            <button className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-700 text-gray-100 text-sm">
+              <MessageSquare className="w-4 h-4" />
+              <span>Stack Implementation</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+const DSATutorChat = () => {
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
+  const [sessionId] = useState('user333');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const messagesEndRef = useRef(null);
+
+  const preferences = JSON.parse(localStorage.getItem('chatPreferences') || '{}');
+  
+  useEffect(() => {
+    // If no preferences are set, redirect to init page
+    if (!preferences.topic) {
+      navigate('/');
+    }
+  }, []);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const handleClearSession = async () => {
+    if (isClearing) return;
+    
+    setIsClearing(true);
+    try {
+      const response = await fetch('http://localhost:5000/clear-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          session_id: sessionId,
+        }),
+      });
+
+      if (response.ok) {
+        setMessages([{
+          content: 'Session cleared successfully. You can start a new conversation.',
+          isUser: false,
+        }]);
+      } else {
+        throw new Error('Failed to clear session');
+      }
+    } catch (error) {
+      console.error('Error clearing session:', error);
+      setMessages(prev => [...prev, {
+        content: 'Failed to clear session. Please try again.',
+        isUser: false,
+      }]);
+    } finally {
+      setIsClearing(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!input.trim() || isLoading) return;
+
+    const userMessage = input;
+    setInput('');
+    setIsLoading(true);
+
+    setMessages(prev => [...prev, { content: userMessage, isUser: true }]);
+
+    try {
+      const response = await fetch('http://localhost:5000/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_input: userMessage,
+          session_id: sessionId,
+        }),
+      });
+
+      const data = await response.json();
+      
+      const botMessage = {
+        content: data.explanation || data.feedback,
+        isUser: false,
+        feedback: data.feedback,
+        sources: data.sources,
+        next_question: data.next_question,
+        image_urls: data.image_urls
+      };
+
+      setMessages(prev => [...prev, botMessage]);
+    } catch (error) {
+      console.error('Error:', error);
+      setMessages(prev => [...prev, {
+        content: 'Sorry, there was an error processing your request.',
+        isUser: false,
+      }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex h-screen bg-white dark:bg-gray-800">
+      <Sidebar 
+        isOpen={isSidebarOpen} 
+        onClose={() => setIsSidebarOpen(false)}
+        onClearSession={handleClearSession}
+        isClearing={isClearing}
+      />
+      
+      <div className="flex-1 flex flex-col md:ml-64">
+        <div className="md:hidden flex items-center p-4 border-b dark:border-gray-700">
+          <button
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="text-gray-700 dark:text-gray-200"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto">
+          {messages.length === 0 ? (
+            <div className="h-full flex items-center justify-center text-center px-4">
+              <div className="space-y-4">
+                <h1 className="text-4xl font-bold text-gray-900 dark:text-white">DSA Tutor</h1>
+                <p className="text-gray-600 dark:text-gray-300">Start a conversation about Stack data structure</p>
+              </div>
+            </div>
+          ) : (
+            messages.map((msg, idx) => (
+              <ChatMessage key={idx} message={msg} isUser={msg.isUser} />
+            ))
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+
+        <div className="border-t dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
+          <div className="max-w-3xl mx-auto">
+            <form onSubmit={handleSubmit} className="relative">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Ask about Stack data structure..."
+                className="w-full p-4 pr-12 rounded-lg border dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                disabled={isLoading}
+              />
+              <button
+                type="submit"
+                disabled={isLoading || !input.trim()}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? (
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                ) : (
+                  <Send className="w-6 h-6" />
+                )}
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default DSATutorChat;
