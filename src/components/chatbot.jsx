@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send, Menu, Plus, MessageSquare, Loader2, ChevronDown, ChevronRight, Copy, Check, Trash2, LogOut } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import PreferenceDisplay from './preferenceDisplay';
+import ImageGallerySidebar from './imageGallerySidebar';
+import FullScreenPreview from './fullScreenPreview';
 
 const generateSessionId = () => { 
     return 'user' + Math.floor(Math.random() * 1000);
@@ -357,7 +359,7 @@ const FormattedText = ({ text }) => {
 
 
 
-const Sidebar = ({ isOpen, onClose, onClearSession, isClearing , id, learningPreference}) => {
+const Sidebar = ({ isOpen, onClose, onClearSession, isClearing , id, learningPreference, images, setPreviewImage}) => {
   const navigate = useNavigate();
   
   const handleLogout = () => {
@@ -370,7 +372,7 @@ const Sidebar = ({ isOpen, onClose, onClearSession, isClearing , id, learningPre
   }
 
   return(
-    <div className={`fixed left-0 top-0 bottom-0 w-64 bg-gray-900 transform ${
+    <div className={`fixed left-0 top-0 bottom-0 w-96 bg-gray-900 transform ${
       isOpen ? 'translate-x-0' : '-translate-x-full'
     } transition-transform duration-200 ease-in-out md:translate-x-0`}>
       <div className="flex flex-col h-full">
@@ -398,14 +400,28 @@ const Sidebar = ({ isOpen, onClose, onClearSession, isClearing , id, learningPre
         <div>
         <PreferenceDisplay preferences={learningPreference} />
         </div>
-        
-        <div className="flex-1 overflow-y-auto">
-          <div className="px-4 py-2">
-            <div className="text-gray-400 text-sm">Relevent Images & Docs</div>
-            <div className="mt-2 space-y-2">
+
+
+          <div className="text-gray-400 text-sm px-4 py-2">Relevent Images & Docs</div>
+          <div className="px-4 py-2 space-y-2 h-[calc(100vh-120px)] pb-10 overflow-y-auto
+            [&::-webkit-scrollbar]:w-2
+            [&::-webkit-scrollbar-track]:bg-gray-100
+            [&::-webkit-scrollbar-track]:dark:bg-gray-700
+            [&::-webkit-scrollbar-thumb]:bg-gray-300
+            [&::-webkit-scrollbar-thumb]:dark:bg-gray-600
+            [&::-webkit-scrollbar-thumb]:rounded-full
+            [&::-webkit-scrollbar-thumb]:border-2
+            [&::-webkit-scrollbar-thumb]:border-gray-100
+            [&::-webkit-scrollbar-thumb]:dark:border-gray-700
+            hover:[&::-webkit-scrollbar-thumb]:bg-gray-400
+            hover:[&::-webkit-scrollbar-thumb]:dark:bg-gray-500
+            [&::-webkit-scrollbar-thumb]:transition-colors
+            [&::-webkit-scrollbar]:hover:w-2
+          ">
+            <div className="px-4  mt-2 " >
+              <ImageGallerySidebar images={images || []}  setPreviewImage={setPreviewImage}/>
             </div>
           </div>
-        </div>
   
         <div className="p-6 border-t border-gray-800">
             <button 
@@ -429,7 +445,10 @@ const DSATutorChat = () => {
   const [sessionId] = useState('user333');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [learningPreference, setLearningPreference] = useState(null);
+  const [images, setImages] = useState([])
   const messagesEndRef = useRef(null);
+
+  const [previewImage, setPreviewImage] = useState(null);
 
   const navigate = useNavigate();
 
@@ -629,12 +648,34 @@ const DSATutorChat = () => {
       const data = await response.json();
       setLearningPreference(data);
 
+      fetchImages(data.topic)
+
       console.log("Learning Preference:", learningPreference);
 
     } catch (error) {
       console.error("Error fetching learning preference:", error);
     }
   };
+
+  const fetchImages = async (topic) => {
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/topic-images/${topic}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch learning preference");
+      }
+      const data = await response.json();
+      setImages(data.images)
+
+    }catch{
+      console.error("Error fetching images:", error);
+    }
+  }
 
   return (
     <div className="flex h-screen bg-white dark:bg-gray-800">
@@ -646,7 +687,17 @@ const DSATutorChat = () => {
         isClearing={isClearing}
         id={id}
         learningPreference={learningPreference}
+        images={images}
+        setPreviewImage={setPreviewImage}
       />
+
+      <>
+        {/* Existing JSX */}
+        <FullScreenPreview 
+          image={previewImage} 
+          onClose={() => setPreviewImage(null)} 
+        />
+      </>
       
       <div className="flex-1 flex flex-col md:ml-64">
         <div className="md:hidden flex items-center p-4 border-b dark:border-gray-700">
