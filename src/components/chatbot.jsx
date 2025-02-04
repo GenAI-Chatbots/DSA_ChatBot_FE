@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Menu, Plus, MessageSquare, Loader2, ChevronDown, ChevronRight, Copy, Check, Trash2, LogOut } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
+import PreferenceDisplay from './preferenceDisplay';
 
 const generateSessionId = () => { 
     return 'user' + Math.floor(Math.random() * 1000);
@@ -356,13 +357,17 @@ const FormattedText = ({ text }) => {
 
 
 
-const Sidebar = ({ isOpen, onClose, onClearSession, isClearing , id}) => {
+const Sidebar = ({ isOpen, onClose, onClearSession, isClearing , id, learningPreference}) => {
   const navigate = useNavigate();
   
   const handleLogout = () => {
     localStorage.removeItem('token');
     navigate('/auth');
   };
+
+  const clickNewChat = () => {
+    navigate('/')
+  }
 
   return(
     <div className={`fixed left-0 top-0 bottom-0 w-64 bg-gray-900 transform ${
@@ -371,7 +376,7 @@ const Sidebar = ({ isOpen, onClose, onClearSession, isClearing , id}) => {
       <div className="flex flex-col h-full">
         <div className="p-4 space-y-2">
           <div style={{color:"white"}}>Chat Id:  {id}</div>
-          <button className="w-full flex items-center justify-start space-x-2 px-3 py-2 border border-gray-700 rounded-lg hover:bg-gray-700 text-white transition-colors">
+          <button onClick={clickNewChat} className="w-full flex items-center justify-start space-x-2 px-3 py-2 border border-gray-700 rounded-lg hover:bg-gray-700 text-white transition-colors">
             <Plus className="w-4 h-4" />
             <span>New chat</span>
           </button>
@@ -389,6 +394,10 @@ const Sidebar = ({ isOpen, onClose, onClearSession, isClearing , id}) => {
             <span>Clear session</span>
           </button>
         </div>
+
+        <div>
+        <PreferenceDisplay preferences={learningPreference} />
+        </div>
         
         <div className="flex-1 overflow-y-auto">
           <div className="px-4 py-2">
@@ -398,7 +407,7 @@ const Sidebar = ({ isOpen, onClose, onClearSession, isClearing , id}) => {
           </div>
         </div>
   
-        <div className="p-4 border-t border-gray-800">
+        <div className="p-6 border-t border-gray-800">
             <button 
               onClick={handleLogout}
               className="w-full flex items-center justify-start space-x-2 px-3 py-2 border border-gray-700 rounded-lg hover:bg-gray-700 text-white transition-colors"
@@ -426,36 +435,97 @@ const DSATutorChat = () => {
 
   const { id } = useParams();
 
-  const preferences = JSON.parse(localStorage.getItem('chatPreferences') || '{}');
+ // const preferences = JSON.parse(localStorage.getItem('chatPreferences') || '{}');
   
   useEffect(() => {
     // If no preferences are set, redirect to init page
-    if (!preferences.topic) {
-      navigate('/');
-    }
+    // if (!preferences.topic) {
+    //   navigate('/');
+    // }
     
     fetchLearningPreference(id);
   }, []);
 
-   useEffect(() => {
-      const verifyToken = async () => {
-        const token = localStorage.getItem('token');
-        console.log('Token:', token);
+  //  useEffect(() => {
+  //     const verifyToken = async () => {
+  //       const token = localStorage.getItem('token');
+  //       console.log('Token:', token);
   
-        try {
-          const response = await fetch(`http://127.0.0.1:8000/verify-token/${token}`);
+  //       try {
+  //         if(token !== null) {
+  //           const response = await fetch(`http://127.0.0.1:8000/verify-token/${token}`);
   
-          if(!response.ok){
-            throw new Error('Token verification failed');
-          }
-        } catch (error) {
-          localStorage.removeItem('token');
-          navigate('/auth');
-        }
+  //           if(!response.ok){
+  //             throw new Error('Token verification failed');
+  //           }
+  //         }else{
+  //           navigate('/auth');
+  //         }
+  //       } catch (error) {
+  //         localStorage.removeItem('token');
+  //         navigate('/auth');
+  //       }
+  //     }
+
+  //     const verifyId = async () => {
+  //       try {
+  //         if(id !== null) {
+  //           const response = await fetch(`http://127.0.0.1:8000/verify-chat/${id}`)
+
+  //           if(!response.ok){
+  //             throw new Error('Chat verification failed');
+  //           }
+  
+  //         }else{
+  //           navigate('/');
+  //         }
+  //       } catch (error) {
+  //         localStorage.removeItem('token');
+  //         navigate('/');
+  //       }
+  //     }
+  
+  //     verifyToken();
+  //     verifyId();
+  //   }, [navigate]);
+
+  useEffect(() => {
+    const verify = async () => {
+      const token = localStorage.getItem("token");
+      console.log("Token:", token);
+
+      if (!token) {
+        navigate("/auth");
+        return;
       }
-  
-      verifyToken();
-    }, [navigate]);
+
+      try {
+        // Step 1: Verify Token
+        const tokenResponse = await fetch(`http://127.0.0.1:8000/verify-token/${token}`);
+
+        if (!tokenResponse.ok) {
+          throw new Error("Token verification failed");
+        }
+
+        // Step 2: Verify Chat ID (only if Token is valid)
+        if (!id) {
+          navigate("/");
+          return;
+        }
+
+        const idResponse = await fetch(`http://127.0.0.1:8000/verify-chat/${id}`);
+
+        if (!idResponse.ok) {
+          throw new Error("Chat verification failed");
+        }
+      } catch (error) {
+        localStorage.removeItem("token");
+        navigate("/auth");
+      }
+    };
+
+    verify();
+  }, [id, navigate]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -546,7 +616,7 @@ const DSATutorChat = () => {
 
   const fetchLearningPreference = async (id) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/learning-preferences/${id}`, {
+      const response = await fetch(`http://127.0.0.1:8000/pref/${id}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -575,6 +645,7 @@ const DSATutorChat = () => {
         onClearSession={handleClearSession}
         isClearing={isClearing}
         id={id}
+        learningPreference={learningPreference}
       />
       
       <div className="flex-1 flex flex-col md:ml-64">
