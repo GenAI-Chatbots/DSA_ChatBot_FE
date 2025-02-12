@@ -359,7 +359,7 @@ const FormattedText = ({ text }) => {
 
 
 
-const Sidebar = ({ isOpen, onClose, onClearSession, isClearing , id, learningPreference, images, setPreviewImage}) => {
+const Sidebar = ({ isOpen, onClose, onClearSession, isClearing , id, learningPreference, images, setPreviewImage, conversationId, setConversationId, setMessages}) => {
   const navigate = useNavigate();
   
   const handleLogout = () => {
@@ -369,6 +369,29 @@ const Sidebar = ({ isOpen, onClose, onClearSession, isClearing , id, learningPre
 
   const clickNewChat = () => {
     navigate('/')
+  }
+
+  const clearConversation = async () => {
+    if (!conversationId) return;
+
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/deleteconv/${conversationId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete conversation');
+      }
+
+      setConversationId(null)
+      setMessages([])
+    } catch (error) {
+      console.error('Error deleting conversation:', error);
+      // You might want to add a toast notification here for error feedback
+    }
   }
 
   return(
@@ -384,7 +407,7 @@ const Sidebar = ({ isOpen, onClose, onClearSession, isClearing , id, learningPre
           </button>
           
           <button 
-            onClick={onClearSession}
+            onClick={clearConversation}
             disabled={isClearing}
             className="w-full flex items-center justify-start space-x-2 px-3 py-2 border border-red-700 rounded-lg hover:bg-red-700/20 text-red-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -393,7 +416,7 @@ const Sidebar = ({ isOpen, onClose, onClearSession, isClearing , id, learningPre
             ) : (
               <Trash2 className="w-4 h-4" />
             )}
-            <span>Clear session</span>
+            <span>Clear Conversation</span>
           </button>
         </div>
 
@@ -438,6 +461,7 @@ const Sidebar = ({ isOpen, onClose, onClearSession, isClearing , id, learningPre
 };
 
 const DSATutorChat = () => {
+  const [conversationId, setConversationId] = useState(null);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -455,7 +479,42 @@ const DSATutorChat = () => {
   const { id } = useParams();
 
  // const preferences = JSON.parse(localStorage.getItem('chatPreferences') || '{}');
-  
+  // Fetch existing conversation and messages
+  const fetchExistingConversation = async (preferenceId, userId) => {
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/conversation/${preferenceId}/${userId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch conversation');
+      }
+      
+      const data = await response.json();
+      
+      // Check if data and data.conversation exist before accessing properties
+      if (data && data.conversation) {
+        setConversationId(data.conversation._id);
+        // Convert stored messages to the format our UI expects
+        const formattedMessages = data.conversation.messages.map(msg => ({
+          content: msg.content,
+          isUser: msg.role === 'user',
+          feedback: msg.feedback,
+          sources: msg.sources,
+          image_urls: msg.image_urls
+        }));
+        setMessages(formattedMessages);
+      } else {
+        // Handle case where there's no existing conversation
+        console.log('No existing conversation found');
+        setConversationId(null);
+        setMessages([]);
+      }
+    } catch (error) {
+      console.error('Error fetching conversation:', error);
+      // Optionally set some error state or show an error message to the user
+      setConversationId(null);
+      setMessages([]);
+    }
+  };
+
   useEffect(() => {
     // If no preferences are set, redirect to init page
     // if (!preferences.topic) {
@@ -588,39 +647,114 @@ const DSATutorChat = () => {
     }
   };
 
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   if (!input.trim() || isLoading) return;
+
+  //   const userMessage = input;
+  //   setInput('');
+  //   setIsLoading(true);
+
+  //   setMessages(prev => [...prev, { content: userMessage, isUser: true }]);
+    
+  //   if(conversationId === null){
+  //     fetchExistingConversation(id, learningPreference.userId);
+  //   }
+
+  //   try {
+  //     const response = await fetch('http://127.0.0.1:8000/chat', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify({
+  //         conversation_id: conversationId,
+  //         learning_mode: learningPreference.mode,  
+  //         topic: learningPreference.topic,
+  //         sub_topic: learningPreference.subTopic,
+  //         student_level: learningPreference.level,
+  //         user_input: userMessage,
+  //         user_id:  learningPreference.userId,
+  //         preference_id: id
+  //       }),
+  //     });
+
+  //     const data = await response.json();
+
+  //     console.log("data: ", data.response)
+      
+  //     const botMessage = {
+  //       content: data.response,
+  //       isUser: false,
+  //       feedback: data.feedback,
+  //       sources: data.sources,
+  //       next_question: data.next_question,
+  //       image_urls: data.image_urls
+  //     };
+
+  //     setMessages(prev => [...prev, botMessage]);
+  //   } catch (error) {
+  //     console.error('Error:', error);
+  //     setMessages(prev => [...prev, {
+  //       content: 'Sorry, there was an error processing your request.',
+  //       isUser: false,
+  //     }]);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
+  useEffect(() => {
+    console.log('ConversationId changed:', conversationId);
+  }, [conversationId]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
-
+  
     const userMessage = input;
     setInput('');
     setIsLoading(true);
-
+  
+    // Add user message to UI immediately
     setMessages(prev => [...prev, { content: userMessage, isUser: true }]);
-
+  
     try {
-      const response = await fetch('http://localhost:5000/chat', {
+  
+      // Now send the chat message with the latest conversationId
+      const response = await fetch('http://127.0.0.1:8000/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          conversation_id: conversationId, // This will be null for first message, creating new conversation
+          learning_mode: learningPreference.mode,  
+          topic: learningPreference.topic,
+          sub_topic: learningPreference.subTopic,
+          student_level: learningPreference.level,
           user_input: userMessage,
-          session_id: sessionId,
+          user_id: learningPreference.userId,
+          preference_id: id
         }),
       });
-
+  
       const data = await response.json();
-      
+  
+      // If this was the first message, update conversationId from response
+      if (conversationId === null && data.conversation_id) {
+        setConversationId(data.conversation_id);
+      }
+  
       const botMessage = {
-        content: data.explanation || data.feedback,
+        content: data.response,
         isUser: false,
         feedback: data.feedback,
         sources: data.sources,
         next_question: data.next_question,
         image_urls: data.image_urls
       };
-
+  
       setMessages(prev => [...prev, botMessage]);
     } catch (error) {
       console.error('Error:', error);
@@ -648,6 +782,7 @@ const DSATutorChat = () => {
       const data = await response.json();
       setLearningPreference(data);
 
+      fetchExistingConversation(id, data.userId)
       fetchImages(data.topic)
 
       console.log("Learning Preference:", learningPreference);
@@ -689,6 +824,9 @@ const DSATutorChat = () => {
         learningPreference={learningPreference}
         images={images}
         setPreviewImage={setPreviewImage}
+        conversationId={conversationId}
+        setConversationId={setConversationId} 
+        setMessages={setMessages}
       />
 
       <>

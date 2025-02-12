@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronRight, Clock, BookOpen, Code, Calendar } from 'lucide-react';
+import { ChevronRight, Clock, BookOpen, Code, Calendar, Trash2 } from 'lucide-react';
 
 const PreviousChats = ({ userId, navigate }) => {
   const [chats, setChats] = useState([]);
@@ -52,6 +52,20 @@ const PreviousChats = ({ userId, navigate }) => {
     );
   }
 
+  const handleDelete = async (chatId, e) => {
+    e.stopPropagation(); // Prevent triggering the parent button click
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/deletepref/${chatId}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        setChats(chats.filter(chat => chat.id !== chatId));
+      }
+    } catch (error) {
+      console.error('Error deleting chat:', error);
+    }
+  };
+
   return (
     <div className="w-80 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg ml-4">
 
@@ -80,7 +94,15 @@ const PreviousChats = ({ userId, navigate }) => {
                     </p>
                   </div>
                 </div>
-                <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 dark:text-gray-500 dark:group-hover:text-gray-300" />
+                <div className="flex items-center space-x-2">
+                  <button
+                      onClick={(e) => handleDelete(chat.id, e)}
+                      className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400" />
+                  </button>
+                  <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 dark:text-gray-500 dark:group-hover:text-gray-300" />
+                </div>
               </div>
               
               <div className="mt-2 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
