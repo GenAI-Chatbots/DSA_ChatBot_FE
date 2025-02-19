@@ -470,6 +470,7 @@ const DSATutorChat = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [learningPreference, setLearningPreference] = useState(null);
   const [images, setImages] = useState([])
+  const [processImages, setProcessImages] = useState([])
   const messagesEndRef = useRef(null);
 
   const [previewImage, setPreviewImage] = useState(null);
@@ -735,7 +736,8 @@ const DSATutorChat = () => {
           student_level: learningPreference.level,
           user_input: userMessage,
           user_id: learningPreference.userId,
-          preference_id: id
+          preference_id: id,
+          relevant_images: processImages
         }),
       });
   
@@ -807,9 +809,20 @@ const DSATutorChat = () => {
       const data = await response.json();
       setImages(data.images)
 
+      processImageData(data.images)
+
     }catch{
       console.error("Error fetching images:", error);
     }
+  }
+
+  const processImageData = (imageArray) => {
+    let processImages = imageArray.map(item => ({
+      imageNumber: item.imageNo,
+      imageDescription: item.imageDes
+    })).sort((a, b) => a.imageNumber - b.imageNumber);
+
+    setProcessImages(processImages)
   }
 
   return (
@@ -870,7 +883,7 @@ const DSATutorChat = () => {
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask about Stack data structure..."
+                placeholder="Ask about data structures..."
                 className="w-full p-4 pr-12 rounded-lg border dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                 disabled={isLoading}
               />

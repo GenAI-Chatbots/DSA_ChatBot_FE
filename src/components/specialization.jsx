@@ -16,8 +16,8 @@ const ChatInitPage = () => {
   
   const topics = {
     'Stack': ['Basic Operations', 'Implementation', 'Applications'],
-    'Queue': ['Basic Operations', 'Implementation', 'Circular Queue'],
-    'Linked List': ['Singly Linked List', 'Doubly Linked List', 'Circular Linked List'],
+    'Queue': ['Basic Operations', 'Implementation', 'Applications'],
+    'Linked List': ['Basic Operations', 'Implementation', 'Applications'],
   };
 
   useEffect(() => {
