@@ -63,7 +63,32 @@ const ChatInitPage = () => {
 
       if (response.ok) {
         const data = await response.json();
-        navigate(`/chat/${data.id}`);
+
+        // Second API call to /initialize-rag - now without body
+        const ragResponse = await fetch('http://127.0.0.1:8000/initialize-rag', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (!ragResponse.ok) {
+          throw new Error('Failed to initialize RAG');
+        }
+
+        const ragData = await ragResponse.json();
+
+        // setA({
+        //   show: true,
+        //   message: ragData.message,
+        //   results: ragData.results
+        // });
+        alert(ragData.message)
+    
+        // Navigate after a short delay to show the alert
+        setTimeout(() => {
+          navigate(`/chat/${data.id}`);
+        }, 2000);
+
+        // navigate(`/chat/${data.id}`);
       } else {
         console.error('Failed to submit learning preferences');
       }
@@ -160,8 +185,8 @@ const ChatInitPage = () => {
                 >
                   <Code className="w-8 h-8 text-green-500" />
                   <div className="text-left">
-                    <h3 className="font-medium text-gray-900 dark:text-white">Practical</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-300">Hands-on coding practice</p>
+                    <h3 className="font-medium text-gray-900 dark:text-white">Coding</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-300">Learn Coding concepts and implementations</p>
                   </div>
                 </button>
               </div>
