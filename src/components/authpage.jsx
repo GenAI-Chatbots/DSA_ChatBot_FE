@@ -127,7 +127,7 @@ const AuthPage = () => {
           {/* Logo/Title */}
           <div className="text-center">
             <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
-              DSA Assistant
+             Data Structures Assistant
             </h1>
             <p className="mt-2 text-gray-600 dark:text-gray-400">
               Your personal Data Structures and Algorithms guide

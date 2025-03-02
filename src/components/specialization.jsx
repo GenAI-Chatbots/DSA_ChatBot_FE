@@ -13,12 +13,40 @@ const ChatInitPage = () => {
     level: '',
     userId: ''
   });
+  const [topics, setTopics] = useState({});
   
-  const topics = {
-    'Stack': ['Basic Operations', 'Implementation', 'Applications'],
-    'Queue': ['Basic Operations', 'Implementation', 'Applications'],
-    'Linked List': ['Basic Operations', 'Implementation', 'Applications'],
-  };
+  // const topics = {
+  //   'stack': ['Basic Operations', 'Implementation', 'Applications'],
+  //   'queue': ['Basic Operations', 'Implementation', 'Applications'],
+  //   'linkedlist': ['Basic Operations', 'Implementation', 'Applications'],
+  // };
+
+  useEffect(() => {
+    const fetchTopics = async () => {
+      try {
+        const response = await fetch("http://127.0.0.1:8000/all-topics");
+        if (response.ok) {
+          const data = await response.json();
+
+          if (Array.isArray(data)) {
+            // Transform array into an object with topics as keys
+            const formattedTopics = data.reduce((acc, topic) => {
+              acc[topic] = ["Basic Operations", "Implementation", "Applications"];
+              return acc;
+            }, {});
+
+            setTopics(formattedTopics);
+          } else {
+            console.error("Invalid data format:", data);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching topics:", error);
+      }
+    };
+
+    fetchTopics();
+  }, []);
 
   useEffect(() => {
     const verifyToken = async () => {
@@ -144,7 +172,7 @@ const ChatInitPage = () => {
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-12">
             <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              DSA Learning Assistant
+              Data Structures Learning Assistant
             </h1>
             <p className="text-lg text-gray-600 dark:text-gray-300">
               Customize your learning experience
