@@ -395,9 +395,9 @@ const Sidebar = ({ isOpen, onClose, onClearSession, isClearing , id, learningPre
   }
 
   return(
-    <div className={`fixed left-0 top-0 bottom-0 w-96 bg-gray-900 transform ${
+    <div className={`fixed pt-10 left-0 top-0 bottom-0 w-96 bg-gray-900 transform ${
       isOpen ? 'translate-x-0' : '-translate-x-full'
-    } transition-transform duration-200 ease-in-out md:translate-x-0`}>
+    } transition-transform duration-200 ease-in-out `}>
       <div className="flex flex-col h-full">
         <div className="p-4 space-y-2">
           <div style={{color:"white"}}>Chat Id:  {id}</div>
@@ -406,18 +406,28 @@ const Sidebar = ({ isOpen, onClose, onClearSession, isClearing , id, learningPre
             <span>New chat</span>
           </button>
           
-          <button 
-            onClick={clearConversation}
-            disabled={isClearing}
-            className="w-full flex items-center justify-start space-x-2 px-3 py-2 border border-red-700 rounded-lg hover:bg-red-700/20 text-red-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isClearing ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Trash2 className="w-4 h-4" />
-            )}
-            <span>Clear Conversation</span>
-          </button>
+          <div className=' flex gap-5'>
+            <button 
+              onClick={clearConversation}
+              disabled={isClearing}
+              className="w-full flex items-center justify-start space-x-2 px-3 py-2 border border-yellow-700 rounded-lg hover:bg-yellow-700/20 text-yellow-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isClearing ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Trash2 className="w-4 h-4" />
+              )}
+              <span className='text-sm'>Clear Chat</span>
+            </button>
+            <button 
+              onClick={handleLogout}
+              disabled={isClearing}
+              className="w-full flex items-center justify-start space-x-2 px-3 py-2 border border-red-700 rounded-lg hover:bg-red-700/20 text-red-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className='text-sm'>Log Out</span>
+            </button>
+          </div>
         </div>
 
         <div>
@@ -446,15 +456,6 @@ const Sidebar = ({ isOpen, onClose, onClearSession, isClearing , id, learningPre
             </div>
           </div>
   
-        <div className="p-6 border-t border-gray-800">
-            <button 
-              onClick={handleLogout}
-              className="w-full flex items-center justify-start space-x-2 px-3 py-2 border border-gray-700 rounded-lg hover:bg-gray-700 text-white transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-              <span>Logout</span>
-            </button>
-          </div>
       </div>
     </div>
   )
@@ -850,8 +851,8 @@ const DSATutorChat = () => {
         />
       </>
       
-      <div className="flex-1 flex flex-col md:ml-64">
-        <div className="md:hidden flex items-center p-4 border-b dark:border-gray-700">
+      <div className="flex-1 flex flex-col ">
+        <div className="flex fixed items-center p-4 border-b dark:border-gray-700">
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="text-gray-700 dark:text-gray-200"
@@ -877,30 +878,30 @@ const DSATutorChat = () => {
         </div>
 
         <div className="border-t dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
-          <div className="max-w-3xl mx-auto">
-            <form onSubmit={handleSubmit} className="relative">
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask about data structures..."
-                className="w-full p-4 pr-12 rounded-lg border dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-                disabled={isLoading}
-              />
-              <button
-                type="submit"
-                disabled={isLoading || !input.trim()}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLoading ? (
-                  <Loader2 className="w-6 h-6 animate-spin" />
-                ) : (
-                  <Send className="w-6 h-6" />
-                )}
-              </button>
-            </form>
-          </div>
-        </div>
+  <div className="max-w-3xl mx-auto">
+    <form onSubmit={handleSubmit} className="flex items-center gap-2 border rounded-lg dark:border-gray-700 bg-white dark:bg-gray-700 px-4 py-2">
+      <input
+        type="text"
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        placeholder="Ask about data structures..."
+        className="w-full p-2 bg-transparent text-gray-900 dark:text-white focus:outline-none"
+        disabled={isLoading}
+      />
+      <button
+        type="submit"
+        disabled={isLoading || !input.trim()}
+        className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {isLoading ? (
+          <Loader2 className="w-6 h-6 animate-spin" />
+        ) : (
+          <Send className="w-6 h-6" />
+        )}
+      </button>
+    </form>
+  </div>
+</div>
       </div>
     </div>
   );
