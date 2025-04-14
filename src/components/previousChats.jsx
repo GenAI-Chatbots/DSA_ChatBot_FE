@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronRight, Clock, BookOpen, Code, Calendar, Trash2 } from 'lucide-react';
+import BASE_URL from '../config';
 
 const PreviousChats = ({ userId, navigate }) => {
   const [chats, setChats] = useState([]);
@@ -8,7 +9,7 @@ const PreviousChats = ({ userId, navigate }) => {
   useEffect(() => {
     const fetchChats = async () => {
       try {
-        const response = await fetch(`http://127.0.0.1:8000/previous_prefs/${userId}`);
+        const response = await fetch(`${BASE_URL}/previous_prefs/${userId}`);
         if (response.ok) {
           const data = await response.json();
           setChats(data);
@@ -55,7 +56,7 @@ const PreviousChats = ({ userId, navigate }) => {
   const handleDelete = async (chatId, e) => {
     e.stopPropagation(); // Prevent triggering the parent button click
     try {
-      const response = await fetch(`http://127.0.0.1:8000/deletepref/${chatId}`, {
+      const response = await fetch(`${BASE_URL}/deletepref/${chatId}`, {
         method: 'DELETE',
       });
       if (response.ok) {

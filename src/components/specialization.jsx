@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { BookOpen, Code, ChevronRight, LogOut, ChevronLeft } from 'lucide-react';
 import { jwtDecode } from 'jwt-decode';
 import PreviousChats from './previousChats';
+import BASE_URL from '../config';
 
 const ChatInitPage = () => {
   const navigate = useNavigate();
@@ -25,7 +26,7 @@ const ChatInitPage = () => {
   useEffect(() => {
     const fetchTopics = async () => {
       try {
-        const response = await fetch("http://127.0.0.1:8000/all-topics");
+        const response = await fetch(`${BASE_URL}/all-topics`);
         if (response.ok) {
           const data = await response.json();
 
@@ -63,7 +64,7 @@ const ChatInitPage = () => {
 
       try {
         if(token !== null) {
-          const response = await fetch(`http://127.0.0.1:8000/verify-token/${token}`);
+          const response = await fetch(`${BASE_URL}/verify-token/${token}`);
           if(!response.ok) throw new Error('Token verification failed');
         } else {
           navigate('/auth');
@@ -84,7 +85,7 @@ const ChatInitPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://127.0.0.1:8000/pref', {
+      const response = await fetch(`${BASE_URL}/pref`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -94,7 +95,7 @@ const ChatInitPage = () => {
         const data = await response.json();
 
         // Second API call to /initialize-rag - now without body
-        const ragResponse = await fetch('http://127.0.0.1:8000/initialize-rag', {
+        const ragResponse = await fetch(`${BASE_URL}/initialize-rag`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' }
         });

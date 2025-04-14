@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AtSign, Lock, Loader2, XCircle, CheckCircle } from 'lucide-react';
+import BASE_URL from '../config';
 
 const CustomAlert = ({ type, message, onClose }) => {
   useEffect(() => {
@@ -53,7 +54,7 @@ const AuthPage = () => {
 
     try {
       if(isLogin) {
-        const response = await fetch('http://127.0.0.1:8000/token', {
+        const response = await fetch(`${BASE_URL}/token`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(formData),
@@ -71,7 +72,7 @@ const AuthPage = () => {
           throw new Error('Invalid username or password');
         }
       } else {
-        const response = await fetch(`http://127.0.0.1:8000/register`, {
+        const response = await fetch(`${BASE_URL}/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(formData),

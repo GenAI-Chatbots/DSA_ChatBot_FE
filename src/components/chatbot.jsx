@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import PreferenceDisplay from './preferenceDisplay';
 import ImageGallerySidebar from './imageGallerySidebar';
 import FullScreenPreview from './fullScreenPreview';
+import BASE_URL from '../config';
 
 const generateSessionId = () => { 
     return 'user' + Math.floor(Math.random() * 1000);
@@ -375,7 +376,7 @@ const Sidebar = ({ isOpen, onClose, onClearSession, isClearing , id, learningPre
     if (!conversationId) return;
 
     try {
-      const response = await fetch(`http://127.0.0.1:8000/deleteconv/${conversationId}`, {
+      const response = await fetch(`${BASE_URL}/deleteconv/${conversationId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json'
@@ -484,7 +485,7 @@ const DSATutorChat = () => {
   // Fetch existing conversation and messages
   const fetchExistingConversation = async (preferenceId, userId) => {
     try {
-      const response = await fetch(`http://127.0.0.1:8000/conversation/${preferenceId}/${userId}`);
+      const response = await fetch(`${BASE_URL}/conversation/${preferenceId}/${userId}`);
       if (!response.ok) {
         throw new Error('Failed to fetch conversation');
       }
@@ -581,7 +582,7 @@ const DSATutorChat = () => {
 
       try {
         // Step 1: Verify Token
-        const tokenResponse = await fetch(`http://127.0.0.1:8000/verify-token/${token}`);
+        const tokenResponse = await fetch(`${BASE_URL}/verify-token/${token}`);
 
         if (!tokenResponse.ok) {
           throw new Error("Token verification failed");
@@ -593,7 +594,7 @@ const DSATutorChat = () => {
           return;
         }
 
-        const idResponse = await fetch(`http://127.0.0.1:8000/verify-chat/${id}`);
+        const idResponse = await fetch(`${BASE_URL}/verify-chat/${id}`);
 
         if (!idResponse.ok) {
           throw new Error("Chat verification failed");
@@ -724,7 +725,7 @@ const DSATutorChat = () => {
     try {
   
       // Now send the chat message with the latest conversationId
-      const response = await fetch('http://127.0.0.1:8000/chat', {
+      const response = await fetch(`${BASE_URL}/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -772,7 +773,7 @@ const DSATutorChat = () => {
 
   const fetchLearningPreference = async (id) => {
     try {
-      const response = await fetch(`http://127.0.0.1:8000/pref/${id}`, {
+      const response = await fetch(`${BASE_URL}/pref/${id}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -797,7 +798,7 @@ const DSATutorChat = () => {
 
   const fetchImages = async (topic) => {
     try {
-      const response = await fetch(`http://127.0.0.1:8000/topic-images/${topic}`, {
+      const response = await fetch(`${BASE_URL}/topic-images/${topic}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
