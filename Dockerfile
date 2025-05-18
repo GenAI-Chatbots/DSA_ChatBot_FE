@@ -4,18 +4,14 @@ FROM node:18-alpine
 # Set working directory
 WORKDIR /app
 
-# Install dependencies
+# Copy dependency files first to leverage Docker cache
 COPY package.json package-lock.json ./
+
+# Install dependencies
 RUN npm ci
 
-# Copy the rest of the source code
+# Copy the rest of the application files
 COPY . .
 
-# Build the app
-RUN npm install
-
-# Expose the default Vite preview port
-EXPOSE 4173
-
-# Serve the built app using Vite preview
+# Run the development server
 CMD ["npm", "run", "dev"]
