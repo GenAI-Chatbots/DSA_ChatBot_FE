@@ -5,16 +5,13 @@ FROM node:18-alpine
 WORKDIR /app
 
 # Copy dependency files first to leverage Docker cache
-COPY package.json package-lock.json ./
+COPY package.json .
 
 # Install dependencies
-RUN npm ci
+RUN npm i
 
 # Copy the rest of the application files
 COPY . .
-
-# Expose Vite port
-EXPOSE 5173
 
 # Run the development server
 CMD ["npm", "run", "dev"]
