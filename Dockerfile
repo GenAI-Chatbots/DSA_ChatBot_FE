@@ -12,10 +12,10 @@ RUN npm ci
 COPY . .
 
 # Build the app
-RUN npm run build
+RUN npm install
 
 # Expose the default Vite preview port
 EXPOSE 4173
 
 # Serve the built app using Vite preview
-CMD ["npm", "run", "preview"]
+CMD ["npm", "run", "dev"]
