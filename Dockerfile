@@ -13,5 +13,8 @@ RUN npm ci
 # Copy the rest of the application files
 COPY . .
 
+# Expose Vite port
+EXPOSE 5173
+
 # Run the development server
 CMD ["npm", "run", "dev"]
