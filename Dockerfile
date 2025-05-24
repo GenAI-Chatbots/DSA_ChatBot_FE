@@ -4,14 +4,18 @@ FROM node:18-alpine
 # Set working directory
 WORKDIR /app
 
-# Copy dependency files first to leverage Docker cache
-COPY package.json .
-
-# Install dependencies
-RUN npm i
-
-# Copy the rest of the application files
+# Copy files
+COPY package.json ./
 COPY . .
 
-# Run the development server
-CMD ["npm", "run", "dev"]
+# Install dependencies
+RUN npm install
+
+# Build the Vite app
+RUN npm run build
+
+# Install a lightweight static server
+RUN npm install -g serve
+
+# Serve the build folder
+CMD ["serve", "-s", "dist", "-l", "5173"]
